@@ -66,14 +66,14 @@ app.get('/', (req, res) => {
     </head>
     <body>
       <div class="container">
-        <h1>🌦️ API Météo France - Backend</h1>
+        <h1>🌦️ API Météo France - Backend v2</h1>
         <div class="status">✅ Serveur actif et opérationnel</div>
         
         <h2>📡 Endpoints disponibles</h2>
         
         <div class="endpoint">
           <h3>GET /api/vigilance</h3>
-          <p>Récupère les données de vigilance météorologique pour tous les départements français.</p>
+          <p>Récupère les données de vigilance météorologique via l'API data.gouv.fr</p>
           <p><strong>URL :</strong> <a href="/api/vigilance" target="_blank">/api/vigilance</a></p>
           <p><strong>Réponse :</strong> JSON</p>
         </div>
@@ -89,8 +89,8 @@ app.get('/', (req, res) => {
         <code>const apiUrl = '${req.protocol}://${req.get('host')}/api/vigilance';</code>
         
         <h2>ℹ️ Informations</h2>
-        <p><strong>Version :</strong> 1.0.0</p>
-        <p><strong>Source des données :</strong> Météo France API Publique</p>
+        <p><strong>Version :</strong> 2.0.0</p>
+        <p><strong>Source des données :</strong> data.gouv.fr (Météo France)</p>
         <p><strong>CORS :</strong> Activé pour toutes les origines</p>
         <p><strong>Mise à jour :</strong> En temps réel</p>
       </div>
@@ -113,17 +113,23 @@ app.get('/api/vigilance', async (req, res) => {
   try {
     console.log('📡 Requête reçue pour /api/vigilance');
     
-    const apiUrl = 'https://public-api.meteofrance.fr/public/DPVigilance/v1/cartevigilance/encours';
+    // Utilisation de l'API data.gouv.fr qui agrège les données de Météo France
+    const apiUrl = 'https://www.data.gouv.fr/fr/datasets/r/94644051-6f92-416a-8333-a18c6b2de6e7';
     
-    console.log('🔄 Appel à l\'API Météo France...');
-    const response = await fetch(apiUrl);
+    console.log('🔄 Appel à l\'API data.gouv.fr...');
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'MeteoFranceApp/1.0'
+      }
+    });
     
     if (!response.ok) {
-      throw new Error(`Erreur API Météo France: ${response.status} ${response.statusText}`);
+      console.error(`❌ Erreur API: ${response.status}`);
+      throw new Error(`Erreur API: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log('✅ Données reçues de Météo France');
+    console.log('✅ Données reçues de data.gouv.fr');
     
     // Ajouter des headers pour le cache
     res.set({
@@ -137,7 +143,8 @@ app.get('/api/vigilance', async (req, res) => {
     console.error('❌ Erreur:', error.message);
     res.status(500).json({ 
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      info: 'Impossible de récupérer les données de vigilance'
     });
   }
 });
@@ -146,10 +153,11 @@ app.get('/api/vigilance', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log('\n╔═══════════════════════════════════════════════════════╗');
   console.log('║                                                       ║');
-  console.log('║     🌦️  Backend Météo France - Serveur actif  🌦️      ║');
+  console.log('║     🌦️  Backend Météo France v2 - Serveur actif 🌦️   ║');
   console.log('║                                                       ║');
   console.log('╚═══════════════════════════════════════════════════════╝\n');
   console.log(`✅ Serveur actif sur : http://0.0.0.0:${PORT}`);
   console.log(`📡 API disponible sur : http://0.0.0.0:${PORT}/api/vigilance`);
-  console.log(`🧪 Test disponible sur : http://0.0.0.0:${PORT}/api/test\n`);
+  console.log(`🧪 Test disponible sur : http://0.0.0.0:${PORT}/api/test`);
+  console.log(`📊 Source : data.gouv.fr (Météo France)\n`);
 });
